@@ -31,8 +31,10 @@
     button:active { transform: translateY(0); }
     #fitBtn { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; box-shadow: 0 2px 12px rgba(59, 130, 246, 0.4); }
     #fitBtn:hover { box-shadow: 0 4px 20px rgba(59, 130, 246, 0.5); }
-    #clearBtn { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.2); }
-    #clearBtn:hover { background: rgba(148, 163, 184, 0.25); }
+    #clearBtn, .sample-btns button { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.2); }
+    #clearBtn:hover, .sample-btns button:hover { background: rgba(148, 163, 184, 0.25); }
+    .sample-btns { display: flex; gap: 0.5rem; }
+    .sample-btns button { padding: 0.4rem 0.75rem; font-size: 0.8rem; }
     .message { font-size: 0.875rem; font-family: 'DM Sans', monospace; color: #a5b4fc; min-height: 1.5rem; padding: 0.375rem 0.75rem; background: rgba(99, 102, 241, 0.12); border-radius: 6px; display: inline-flex; align-items: center; }
     .message:empty { display: none; }
     #fitBtn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
@@ -57,6 +59,10 @@
       </article>
     </div>
     <div class="controls">
+      <div class="sample-btns">
+        <button id="sampleLine">Linear</button>
+        <button id="sampleNoisy">Noisy</button>
+      </div>
       <button id="fitBtn">Fit</button>
       <button id="clearBtn">Clear</button>
       <span class="message" id="message"></span>
@@ -76,6 +82,13 @@
     let points = [];
     let fittedLine = null;
     let animId = null;
+    const SAMPLE_DATA = {
+      linear: () => Array.from({ length: 8 }, (_, i) => ({ x: 1 + i * 1.2, y: 2 + 0.6 * (1 + i * 1.2) })),
+      noisy: () => Array.from({ length: 12 }, (_, i) => {
+        const x = 1 + i * 0.8;
+        return { x, y: 2 + 0.5 * x + (Math.random() - 0.5) * 1.5 };
+      })
+    };
 
     function dataToPixel(x, y) {
       const px = PADDING.left + ((x - X_MIN) / (X_MAX - X_MIN)) * plotWidth;
@@ -255,6 +268,12 @@
       messageEl.textContent = '';
       redraw();
     }
+    function loadSample(key) {
+      clear();
+      points = SAMPLE_DATA[key]();
+      messageEl.textContent = `Loaded ${points.length} points. Click Fit.`;
+      redraw();
+    }
     function redraw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawGrid();
@@ -271,6 +290,8 @@
       points.push(pixelToData(px, py));
       redraw();
     });
+    document.getElementById('sampleLine').addEventListener('click', () => loadSample('linear'));
+    document.getElementById('sampleNoisy').addEventListener('click', () => loadSample('noisy'));
     fitBtn.addEventListener('click', fit);
     clearBtn.addEventListener('click', clear);
     redraw();

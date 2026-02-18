@@ -34,7 +34,9 @@
     button { padding: 0.625rem 1.5rem; font-size: 0.9rem; font-weight: 500; font-family: inherit; border: none; border-radius: 8px; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
     button:hover { transform: translateY(-1px); }
     #fitBtn { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; box-shadow: 0 2px 12px rgba(59, 130, 246, 0.4); }
-    #clearBtn { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.2); }
+    #clearBtn, .sample-btns button { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.2); }
+    .sample-btns { display: flex; gap: 0.5rem; }
+    .sample-btns button { padding: 0.4rem 0.75rem; font-size: 0.8rem; }
     .message { font-size: 0.875rem; font-family: 'DM Sans', monospace; color: #a5b4fc; min-height: 1.5rem; padding: 0.375rem 0.75rem; background: rgba(99, 102, 241, 0.12); border-radius: 6px; display: inline-flex; align-items: center; }
     .message:empty { display: none; }
     #fitBtn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
@@ -63,6 +65,9 @@
         <button id="class0Btn" class="active">Add class 0 (blue)</button>
         <button id="class1Btn">Add class 1 (red)</button>
       </div>
+      <div class="sample-btns">
+        <button id="sampleLinear">Linear separable</button>
+      </div>
       <button id="fitBtn">Fit</button>
       <button id="clearBtn">Clear</button>
       <span class="message" id="message"></span>
@@ -83,10 +88,17 @@
     const plotWidth = canvas.width - PADDING.left - PADDING.right;
     const plotHeight = canvas.height - PADDING.top - PADDING.bottom;
 
-    let points = []; // { x, y, label: 0|1 }
-    let boundary = null; // { w1, w2, b }
+    let points = [];
+    let boundary = null;
     let animId = null;
     let addingClass = 0;
+    const SAMPLE_DATA = {
+      linear: () => {
+        const pts = [];
+        for (let i = 0; i < 8; i++) { pts.push({ x: 2 + i * 0.5, y: 2 + i * 0.3 + Math.random() * 0.5, label: 0 }); pts.push({ x: 5 + i * 0.5, y: 5 + i * 0.3 + Math.random() * 0.5, label: 1 }); }
+        return pts;
+      }
+    };
 
     function sigmoid(z) {
       const t = Math.max(-500, Math.min(500, -z));
@@ -382,6 +394,12 @@
       messageEl.textContent = '';
       redraw();
     }
+    function loadSample(key) {
+      clear();
+      points = SAMPLE_DATA[key]();
+      messageEl.textContent = `Loaded ${points.length} points. Click Fit.`;
+      redraw();
+    }
 
     function redraw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -394,6 +412,7 @@
 
     class0Btn.addEventListener('click', () => { addingClass = 0; class0Btn.classList.add('active'); class1Btn.classList.remove('active'); });
     class1Btn.addEventListener('click', () => { addingClass = 1; class1Btn.classList.add('active'); class0Btn.classList.remove('active'); });
+    document.getElementById('sampleLinear').addEventListener('click', () => loadSample('linear'));
 
     canvas.addEventListener('click', (e) => {
       if (animId) return;
