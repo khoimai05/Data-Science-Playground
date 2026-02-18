@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Linear Regression - Data Science Playground</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'DM Sans', system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: linear-gradient(160deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); color: #e2e8f0; }
+    .app { display: flex; flex-direction: column; align-items: center; padding: 2rem; }
+    .header { text-align: center; margin-bottom: 1.5rem; }
+    .header a { color: #94a3b8; font-size: 0.875rem; text-decoration: none; }
+    .header a:hover { color: #e2e8f0; }
+    h1 { margin: 0 0 0.25rem 0; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; }
+    .subtitle { font-size: 0.875rem; color: #94a3b8; font-weight: 400; }
+    .main { display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; justify-content: center; margin-bottom: 1.25rem; }
+    .canvas-container { background: #1e293b; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06); flex-shrink: 0; }
+    .article { background: #1e293b; border-radius: 12px; padding: 1.25rem 1.5rem; max-width: 320px; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06); }
+    .article h2 { font-size: 0.95rem; font-weight: 600; margin: 0 0 0.75rem 0; color: #e2e8f0; }
+    .article p { font-size: 0.8rem; line-height: 1.6; color: #94a3b8; margin: 0 0 0.75rem 0; }
+    .article p:last-child { margin-bottom: 0; }
+    .article code { font-size: 0.75rem; background: rgba(15, 23, 42, 0.6); padding: 0.15rem 0.4rem; border-radius: 4px; color: #a5b4fc; }
+    canvas { display: block; cursor: crosshair; border-radius: 8px; background: #0f172a; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06); }
+    canvas.fitting { cursor: default; }
+    .controls { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; justify-content: center; }
+    button { padding: 0.625rem 1.5rem; font-size: 0.9rem; font-weight: 500; font-family: inherit; border: none; border-radius: 8px; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+    #fitBtn { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; box-shadow: 0 2px 12px rgba(59, 130, 246, 0.4); }
+    #fitBtn:hover { box-shadow: 0 4px 20px rgba(59, 130, 246, 0.5); }
+    #clearBtn { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.2); }
+    #clearBtn:hover { background: rgba(148, 163, 184, 0.25); }
+    .message { font-size: 0.875rem; font-family: 'DM Sans', monospace; color: #a5b4fc; min-height: 1.5rem; padding: 0.375rem 0.75rem; background: rgba(99, 102, 241, 0.12); border-radius: 6px; display: inline-flex; align-items: center; }
+    .message:empty { display: none; }
+    #fitBtn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <a href="index.html">← Back to menu</a>
+      <h1>Linear Regression</h1>
+      <p class="subtitle">Click to add points · Fit to animate gradient descent</p>
+    </header>
+    <div class="main">
+      <div class="canvas-container">
+        <canvas id="plot" width="600" height="500"></canvas>
+      </div>
+      <article class="article">
+        <h2>How gradient descent works</h2>
+        <p>We fit a line <code>y = mx + b</code> by minimizing the mean squared error (MSE): the average of <code>(prediction - actual)²</code> over all points.</p>
+        <p>Instead of solving directly, we start with a guess (e.g. horizontal line) and take small steps downhill. Each step: compute how wrong we are, then update <code>m</code> and <code>b</code> in the direction that reduces the error.</p>
+        <p>The gradient tells us which way is "down." We move <code>m</code> and <code>b</code> opposite to the gradient, scaled by a learning rate. Repeating this, the line settles into the best fit.</p>
+      </article>
+    </div>
+    <div class="controls">
+      <button id="fitBtn">Fit</button>
+      <button id="clearBtn">Clear</button>
+      <span class="message" id="message"></span>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('plot');
+    const ctx = canvas.getContext('2d');
+    const fitBtn = document.getElementById('fitBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const messageEl = document.getElementById('message');
+    const PADDING = { left: 50, right: 30, top: 30, bottom: 50 };
+    const X_MIN = 0, X_MAX = 10, Y_MIN = 0, Y_MAX = 10;
+    const plotWidth = canvas.width - PADDING.left - PADDING.right;
+    const plotHeight = canvas.height - PADDING.top - PADDING.bottom;
+    let points = [];
+    let fittedLine = null;
+    let animId = null;
+
+    function dataToPixel(x, y) {
+      const px = PADDING.left + ((x - X_MIN) / (X_MAX - X_MIN)) * plotWidth;
+      const py = canvas.height - PADDING.bottom - ((y - Y_MIN) / (Y_MAX - Y_MIN)) * plotHeight;
+      return { x: px, y: py };
+    }
+    function pixelToData(px, py) {
+      const x = X_MIN + ((px - PADDING.left) / plotWidth) * (X_MAX - X_MIN);
+      const y = Y_MAX - ((py - PADDING.top) / plotHeight) * (Y_MAX - Y_MIN);
+      return { x, y };
+    }
+    function drawGrid() {
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.15)';
+      ctx.lineWidth = 1;
+      for (let x = X_MIN; x <= X_MAX; x++) {
+        const { x: px } = dataToPixel(x, Y_MIN);
+        ctx.beginPath();
+        ctx.moveTo(px, PADDING.top);
+        ctx.lineTo(px, canvas.height - PADDING.bottom);
+        ctx.stroke();
+      }
+      for (let y = Y_MIN; y <= Y_MAX; y++) {
+        const { y: py } = dataToPixel(X_MIN, y);
+        ctx.beginPath();
+        ctx.moveTo(PADDING.left, py);
+        ctx.lineTo(canvas.width - PADDING.right, py);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(PADDING.left, PADDING.top);
+      ctx.lineTo(PADDING.left, canvas.height - PADDING.bottom);
+      ctx.lineTo(canvas.width - PADDING.right, canvas.height - PADDING.bottom);
+      ctx.stroke();
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '11px "DM Sans", system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      for (let x = X_MIN; x <= X_MAX; x++) {
+        const { x: px } = dataToPixel(x, Y_MIN);
+        ctx.fillText(String(x), px, canvas.height - PADDING.bottom + 18);
+      }
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for (let y = Y_MIN; y <= Y_MAX; y++) {
+        const { y: py } = dataToPixel(X_MIN, y);
+        ctx.fillText(String(y), PADDING.left - 10, py);
+      }
+    }
+    function drawPoints() {
+      points.forEach(({ x, y }) => {
+        const { x: px, y: py } = dataToPixel(x, y);
+        const r = 7;
+        const grad = ctx.createRadialGradient(px - r/3, py - r/3, 0, px, py, r);
+        grad.addColorStop(0, '#93c5fd');
+        grad.addColorStop(0.7, '#3b82f6');
+        grad.addColorStop(1, '#1d4ed8');
+        ctx.beginPath();
+        ctx.arc(px, py, r, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      });
+    }
+    function drawFittedLine() {
+      if (!fittedLine || points.length < 2) return;
+      const { m, b } = fittedLine;
+      const x1 = X_MIN, x2 = X_MAX, y1 = m * x1 + b, y2 = m * x2 + b;
+      const p1 = dataToPixel(x1, y1), p2 = dataToPixel(x2, y2);
+      const grad = ctx.createLinearGradient(p1.x, p1.y, p2.x, p2.y);
+      grad.addColorStop(0, '#f472b6');
+      grad.addColorStop(0.5, '#a78bfa');
+      grad.addColorStop(1, '#38bdf8');
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.shadowColor = 'rgba(167, 139, 250, 0.5)';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+    function drawResiduals() {
+      if (!fittedLine || points.length < 2) return;
+      const { m, b } = fittedLine;
+      const lineP1 = dataToPixel(X_MIN, m * X_MIN + b);
+      const lineP2 = dataToPixel(X_MAX, m * X_MAX + b);
+      const dx = lineP2.x - lineP1.x, dy = lineP2.y - lineP1.y;
+      const lineLenSq = dx * dx + dy * dy + 1e-12;
+      ctx.strokeStyle = 'rgba(239, 68, 68, 0.8)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 3]);
+      points.forEach(({ x, y }) => {
+        const pt = dataToPixel(x, y);
+        const apx = pt.x - lineP1.x, apy = pt.y - lineP1.y;
+        const t = (apx * dx + apy * dy) / lineLenSq;
+        const projX = lineP1.x + t * dx;
+        const projY = lineP1.y + t * dy;
+        ctx.beginPath();
+        ctx.moveTo(pt.x, pt.y);
+        ctx.lineTo(projX, projY);
+        ctx.stroke();
+      });
+      ctx.setLineDash([]);
+    }
+    function computeOptimal() {
+      const n = points.length;
+      if (n < 2) return null;
+      let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+      points.forEach(({ x, y }) => { sumX += x; sumY += y; sumXY += x * y; sumX2 += x * x; });
+      const denom = n * sumX2 - sumX * sumX;
+      if (Math.abs(denom) < 1e-10) return null;
+      const m = (n * sumXY - sumX * sumY) / denom;
+      const b = (sumY - m * sumX) / n;
+      return { m, b };
+    }
+    function sse(m, b) {
+      return points.reduce((s, { x, y }) => { const p = m * x + b; return s + (p - y) * (p - y); }, 0);
+    }
+    function gradientStep(m, b, lr) {
+      const n = points.length;
+      let dm = 0, db = 0;
+      points.forEach(({ x, y }) => { const err = (m * x + b) - y; dm += err * x; db += err; });
+      dm *= 2 / n; db *= 2 / n;
+      const scale = Math.min(1, 2 / (Math.abs(dm) + Math.abs(db) + 1e-8));
+      return { m: m - lr * dm * scale, b: b - lr * db * scale };
+    }
+    function fit() {
+      if (points.length < 2) { messageEl.textContent = 'Add at least 2 points to fit.'; fittedLine = null; redraw(); return; }
+      const target = computeOptimal();
+      if (!target) { messageEl.textContent = 'Could not fit.'; redraw(); return; }
+      fitBtn.disabled = true;
+      canvas.classList.add('fitting');
+      let m = 0, b = points.reduce((s, p) => s + p.y, 0) / points.length;
+      const lr = 0.015 / Math.sqrt(points.length);
+      const minLossImprovement = 1e-8;
+      let iter = 0, prevLoss = Infinity;
+      function step() {
+        let isDone = false;
+        for (let i = 0; i < 4; i++) {
+          const prevM = m, prevB = b;
+          ({ m, b } = gradientStep(m, b, lr));
+          iter++;
+          if (!Number.isFinite(m) || !Number.isFinite(b) || Math.abs(m) > 100 || Math.abs(b) > 500) {
+            m = target.m; b = target.b; isDone = true; break;
+          }
+          const loss = sse(m, b);
+          if (prevLoss - loss < minLossImprovement) { isDone = true; break; }
+          prevLoss = loss;
+          if (iter >= 800 || (Math.abs(m - prevM) < 1e-5 && Math.abs(b - prevB) < 1e-5)) { isDone = true; break; }
+        }
+        fittedLine = { m, b };
+        messageEl.textContent = `Step ${iter} · Total squared error: ${sse(m, b).toFixed(2)}`;
+        redraw();
+        if (isDone) {
+          fittedLine = target;
+          messageEl.textContent = `y = ${target.m.toFixed(2)}x + ${target.b.toFixed(2)} · Total squared error: ${sse(target.m, target.b).toFixed(2)}`;
+          redraw();
+          fitBtn.disabled = false;
+          canvas.classList.remove('fitting');
+          return;
+        }
+        animId = requestAnimationFrame(step);
+      }
+      animId = requestAnimationFrame(step);
+    }
+    function clear() {
+      if (animId) { cancelAnimationFrame(animId); animId = null; }
+      fitBtn.disabled = false;
+      canvas.classList.remove('fitting');
+      points = [];
+      fittedLine = null;
+      messageEl.textContent = '';
+      redraw();
+    }
+    function redraw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawGrid();
+      drawFittedLine();
+      drawResiduals();
+      drawPoints();
+    }
+    canvas.addEventListener('click', (e) => {
+      if (animId) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
+      const px = (e.clientX - rect.left) * scaleX, py = (e.clientY - rect.top) * scaleY;
+      if (px < PADDING.left || px > canvas.width - PADDING.right || py < PADDING.top || py > canvas.height - PADDING.bottom) return;
+      points.push(pixelToData(px, py));
+      redraw();
+    });
+    fitBtn.addEventListener('click', fit);
+    clearBtn.addEventListener('click', clear);
+    redraw();
+  </script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Science Playground</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(160deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      color: #e2e8f0;
+    }
+    .menu {
+      text-align: center;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.5rem 0;
+    }
+    .tagline {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      margin-bottom: 2rem;
+    }
+    .cards {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    a.card {
+      display: block;
+      width: 240px;
+      padding: 1.5rem;
+      background: #1e293b;
+      border-radius: 12px;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    a.card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+    .card h2 {
+      font-size: 1.1rem;
+      margin: 0 0 0.5rem 0;
+      color: #e2e8f0;
+    }
+    .card p {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      margin: 0;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="menu">
+    <h1>Data Science Playground</h1>
+    <p class="tagline">Interactive ML demos with visualization | More coming soon :)</p>
+    <div class="cards">
+      <a href="linear-regression.html" class="card">
+        <h2>Linear Regression</h2>
+        <p>Fit a line to 2D points. Watch gradient descent minimize MSE and see residual errors.</p>
+      </a>
+      <a href="logistic-regression.html" class="card">
+        <h2>Logistic Regression</h2>
+        <p>Classify two classes. Fit a decision boundary with gradient descent on cross-entropy loss.</p>
+      </a>
+    </div>
+  </div>
+</body>
+</html>
