@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logistic Regression</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Sora:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      font-family: 'Sora', sans-serif; background: #0a0a0a; color: #d4d4d4;
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 2rem;
+    }
+    .header { text-align: center; margin-bottom: 1.5rem; }
+    .header a { font-family: 'JetBrains Mono', monospace; color: #444; font-size: 0.75rem; text-decoration: none; transition: color 0.2s; }
+    .header a:hover { color: #888; }
+    h1 { font-size: 1.1rem; font-weight: 600; color: #fff; margin: 0.5rem 0 0.15rem; }
+    .subtitle { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #444; }
+    .main { display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; justify-content: center; margin-bottom: 1.25rem; }
+    .canvas-wrap { border: 1px solid #1a1a1a; border-radius: 6px; padding: 1rem; transition: border-color 0.3s; }
+    .canvas-wrap:hover { border-color: #2a2a2a; }
+    .info { max-width: 300px; border-left: 1px solid #1a1a1a; padding-left: 1.5rem; }
+    .info h2 { font-size: 0.8rem; font-weight: 600; color: #888; margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .info p { font-size: 0.78rem; line-height: 1.65; color: #555; margin-bottom: 0.6rem; }
+    .info p:last-child { margin-bottom: 0; }
+    .info code { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #888; background: #141414; padding: 0.1rem 0.35rem; border-radius: 3px; }
+    canvas { display: block; cursor: crosshair; border-radius: 4px; background: #0e0e0e; }
+    canvas.fitting { cursor: default; }
+    .controls { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; justify-content: center; }
+    .toggle { display: flex; border: 1px solid #222; border-radius: 4px; overflow: hidden; }
+    .toggle button { font-family: 'JetBrains Mono', monospace; padding: 0.4rem 0.7rem; font-size: 0.72rem; border: none; cursor: pointer; background: transparent; color: #444; transition: color 0.15s, background 0.15s; }
+    .toggle button.active { color: #fff; }
+    .toggle button:first-child.active { background: rgba(96,165,250,0.2); color: #93c5fd; }
+    .toggle button:last-child.active { background: rgba(248,113,113,0.2); color: #fca5a5; }
+    button { font-family: 'JetBrains Mono', monospace; padding: 0.45rem 1rem; font-size: 0.75rem; font-weight: 500; border: 1px solid #222; border-radius: 4px; background: transparent; color: #666; cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+    button:hover { color: #bbb; border-color: #444; }
+    button:active { transform: scale(0.97); }
+    #fitBtn { color: #fff; border-color: #333; background: #161616; }
+    #fitBtn:hover { background: #1e1e1e; border-color: #555; }
+    #fitBtn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .msg { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #555; }
+    .msg:empty { display: none; }
+    @media (max-width: 700px) { .info { border-left: none; padding-left: 0; border-top: 1px solid #1a1a1a; padding-top: 1rem; max-width: 100%; } }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a href="../">← back</a>
+    <h1>logistic regression</h1>
+    <p class="subtitle">blue = class 0, red = class 1</p>
+  </header>
+  <div class="main">
+    <div class="canvas-wrap">
+      <canvas id="plot" width="520" height="420"></canvas>
+    </div>
+    <article class="info">
+      <h2>How it works</h2>
+      <p>Model P(class=1) with sigmoid: <code>σ(z) = 1/(1+e⁻ᶻ)</code> where <code>z = w₁x + w₂y + b</code>. The decision boundary sits where P = 0.5.</p>
+      <p>Minimize cross-entropy loss via gradient descent. No closed-form — pure iteration.</p>
+    </article>
+  </div>
+  <div class="controls">
+    <div class="toggle">
+      <button id="class0Btn" class="active">class 0</button>
+      <button id="class1Btn">class 1</button>
+    </div>
+    <button id="sampleLinear">sample</button>
+    <button id="fitBtn">fit</button>
+    <button id="clearBtn">clear</button>
+    <span class="msg" id="message"></span>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

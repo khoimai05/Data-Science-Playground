@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Linear Regression</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Sora:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      font-family: 'Sora', sans-serif;
+      background: #0a0a0a;
+      color: #d4d4d4;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+    .header { text-align: center; margin-bottom: 1.5rem; }
+    .header a {
+      font-family: 'JetBrains Mono', monospace;
+      color: #444; font-size: 0.75rem; text-decoration: none;
+      transition: color 0.2s;
+    }
+    .header a:hover { color: #888; }
+    h1 { font-size: 1.1rem; font-weight: 600; color: #fff; margin: 0.5rem 0 0.15rem; }
+    .subtitle {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; color: #444;
+    }
+
+    .main {
+      display: flex; gap: 1.5rem; align-items: flex-start;
+      flex-wrap: wrap; justify-content: center; margin-bottom: 1.25rem;
+    }
+
+    .canvas-wrap {
+      border: 1px solid #1a1a1a; border-radius: 6px; padding: 1rem;
+      transition: border-color 0.3s;
+    }
+    .canvas-wrap:hover { border-color: #2a2a2a; }
+
+    .info {
+      max-width: 300px; border-left: 1px solid #1a1a1a; padding-left: 1.5rem;
+    }
+    .info h2 { font-size: 0.8rem; font-weight: 600; color: #888; margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .info p { font-size: 0.78rem; line-height: 1.65; color: #555; margin-bottom: 0.6rem; }
+    .info p:last-child { margin-bottom: 0; }
+    .info code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem; color: #888;
+      background: #141414; padding: 0.1rem 0.35rem; border-radius: 3px;
+    }
+
+    canvas {
+      display: block; cursor: crosshair; border-radius: 4px;
+      background: #0e0e0e;
+    }
+    canvas.fitting { cursor: default; }
+
+    .controls {
+      display: flex; gap: 0.6rem; align-items: center;
+      flex-wrap: wrap; justify-content: center;
+    }
+
+    button {
+      font-family: 'JetBrains Mono', monospace;
+      padding: 0.45rem 1rem; font-size: 0.75rem; font-weight: 500;
+      border: 1px solid #222; border-radius: 4px;
+      background: transparent; color: #666; cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    button:hover { color: #bbb; border-color: #444; }
+    button:active { transform: scale(0.97); }
+
+    #fitBtn {
+      color: #fff; border-color: #333; background: #161616;
+    }
+    #fitBtn:hover { background: #1e1e1e; border-color: #555; }
+    #fitBtn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .msg {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; color: #555;
+    }
+    .msg:empty { display: none; }
+
+    @media (max-width: 700px) {
+      .info { border-left: none; padding-left: 0; border-top: 1px solid #1a1a1a; padding-top: 1rem; max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a href="../">← back</a>
+    <h1>linear regression</h1>
+    <p class="subtitle">click to place points, then fit</p>
+  </header>
+  <div class="main">
+    <div class="canvas-wrap">
+      <canvas id="plot" width="520" height="420"></canvas>
+    </div>
+    <article class="info">
+      <h2>How it works</h2>
+      <p>Fit <code>y = mx + b</code> by minimizing mean squared error — the average of <code>(pred − actual)²</code> across all points.</p>
+      <p>Start with a flat guess, compute how wrong it is, nudge <code>m</code> and <code>b</code> downhill. The gradient tells you which way is down. Repeat until it converges.</p>
+    </article>
+  </div>
+  <div class="controls">
+    <button id="sampleLine">linear</button>
+    <button id="sampleNoisy">noisy</button>
+    <button id="fitBtn">fit</button>
+    <button id="clearBtn">clear</button>
+    <span class="msg" id="message"></span>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('plot');
+    const ctx = canvas.getContext('2d');
+    const fitBtn = document.getElementById('fitBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const messageEl = document.getElementById('message');
+    const PADDING = { left: 44, right: 24, top: 24, bottom: 44 };
+    const X_MIN = 0, X_MAX = 10, Y_MIN = 0, Y_MAX = 10;
+    const plotWidth = canvas.width - PADDING.left - PADDING.right;
+    const plotHeight = canvas.height - PADDING.top - PADDING.bottom;
+    let points = [];
+    let fittedLine = null;
+    let animId = null;
+    const SAMPLE_DATA = {
+      linear: () => Array.from({ length: 8 }, (_, i) => ({ x: 1 + i * 1.2, y: 2 + 0.6 * (1 + i * 1.2) })),
+      noisy: () => Array.from({ length: 12 }, (_, i) => {
+        const x = 1 + i * 0.8;
+        return { x, y: 2 + 0.5 * x + (Math.random() - 0.5) * 1.5 };
+      })
+    };
+
+    function dataToPixel(x, y) {
+      return {
+        x: PADDING.left + ((x - X_MIN) / (X_MAX - X_MIN)) * plotWidth,
+        y: canvas.height - PADDING.bottom - ((y - Y_MIN) / (Y_MAX - Y_MIN)) * plotHeight
+      };
+    }
+    function pixelToData(px, py) {
+      return {
+        x: X_MIN + ((px - PADDING.left) / plotWidth) * (X_MAX - X_MIN),
+        y: Y_MAX - ((py - PADDING.top) / plotHeight) * (Y_MAX - Y_MIN)
+      };
+    }
+    function drawGrid() {
+      ctx.strokeStyle = '#1a1a1a';
+      ctx.lineWidth = 1;
+      for (let x = X_MIN; x <= X_MAX; x++) {
+        const { x: px } = dataToPixel(x, Y_MIN);
+        ctx.beginPath(); ctx.moveTo(px, PADDING.top); ctx.lineTo(px, canvas.height - PADDING.bottom); ctx.stroke();
+      }
+      for (let y = Y_MIN; y <= Y_MAX; y++) {
+        const { y: py } = dataToPixel(X_MIN, y);
+        ctx.beginPath(); ctx.moveTo(PADDING.left, py); ctx.lineTo(canvas.width - PADDING.right, py); ctx.stroke();
+      }
+      // axes
+      ctx.strokeStyle = '#2a2a2a';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(PADDING.left, PADDING.top);
+      ctx.lineTo(PADDING.left, canvas.height - PADDING.bottom);
+      ctx.lineTo(canvas.width - PADDING.right, canvas.height - PADDING.bottom);
+      ctx.stroke();
+      // labels
+      ctx.fillStyle = '#333';
+      ctx.font = '10px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      for (let x = 0; x <= X_MAX; x += 2) {
+        const { x: px } = dataToPixel(x, Y_MIN);
+        ctx.fillText(String(x), px, canvas.height - PADDING.bottom + 16);
+      }
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for (let y = 0; y <= Y_MAX; y += 2) {
+        const { y: py } = dataToPixel(X_MIN, y);
+        ctx.fillText(String(y), PADDING.left - 8, py);
+      }
+    }
+    function drawPoints() {
+      points.forEach(({ x, y }) => {
+        const { x: px, y: py } = dataToPixel(x, y);
+        ctx.beginPath();
+        ctx.arc(px, py, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#e8e8e8';
+        ctx.fill();
+      });
+    }
+    function drawFittedLine() {
+      if (!fittedLine || points.length < 2) return;
+      const { m, b } = fittedLine;
+      const p1 = dataToPixel(X_MIN, m * X_MIN + b);
+      const p2 = dataToPixel(X_MAX, m * X_MAX + b);
+      ctx.strokeStyle = '#e8e8e8';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+    }
+    function drawResiduals() {
+      if (!fittedLine || points.length < 2) return;
+      const { m, b } = fittedLine;
+      ctx.strokeStyle = 'rgba(255,100,100,0.35)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]);
+      points.forEach(({ x, y }) => {
+        const pt = dataToPixel(x, y);
+        const pred = dataToPixel(x, m * x + b);
+        ctx.beginPath(); ctx.moveTo(pt.x, pt.y); ctx.lineTo(pred.x, pred.y); ctx.stroke();
+      });
+      ctx.setLineDash([]);
+    }
+    function computeOptimal() {
+      const n = points.length;
+      if (n < 2) return null;
+      let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+      points.forEach(({ x, y }) => { sumX += x; sumY += y; sumXY += x * y; sumX2 += x * x; });
+      const denom = n * sumX2 - sumX * sumX;
+      if (Math.abs(denom) < 1e-10) return null;
+      const m = (n * sumXY - sumX * sumY) / denom;
+      const b = (sumY - m * sumX) / n;
+      return { m, b };
+    }
+    function sse(m, b) {
+      return points.reduce((s, { x, y }) => { const p = m * x + b; return s + (p - y) * (p - y); }, 0);
+    }
+    function gradientStep(m, b, lr) {
+      const n = points.length;
+      let dm = 0, db = 0;
+      points.forEach(({ x, y }) => { const err = (m * x + b) - y; dm += err * x; db += err; });
+      dm *= 2 / n; db *= 2 / n;
+      const scale = Math.min(1, 2 / (Math.abs(dm) + Math.abs(db) + 1e-8));
+      return { m: m - lr * dm * scale, b: b - lr * db * scale };
+    }
+    function fit() {
+      if (points.length < 2) { messageEl.textContent = 'need ≥ 2 points'; fittedLine = null; redraw(); return; }
+      const target = computeOptimal();
+      if (!target) { messageEl.textContent = 'could not fit'; redraw(); return; }
+      fitBtn.disabled = true;
+      canvas.classList.add('fitting');
+      let m = 0, b = points.reduce((s, p) => s + p.y, 0) / points.length;
+      const lr = 0.05 / Math.sqrt(points.length);
+      let iter = 0, prevLoss = Infinity;
+      function step() {
+        let isDone = false;
+        for (let i = 0; i < 8; i++) {
+          const prevM = m, prevB = b;
+          ({ m, b } = gradientStep(m, b, lr));
+          iter++;
+          if (!Number.isFinite(m) || !Number.isFinite(b) || Math.abs(m) > 100 || Math.abs(b) > 500) {
+            m = target.m; b = target.b; isDone = true; break;
+          }
+          const loss = sse(m, b);
+          if (prevLoss - loss < 1e-8) { isDone = true; break; }
+          prevLoss = loss;
+          if (iter >= 1000 || (Math.abs(m - prevM) < 1e-6 && Math.abs(b - prevB) < 1e-6)) { isDone = true; break; }
+        }
+        fittedLine = { m, b };
+        messageEl.textContent = `step ${iter}  sse: ${sse(m, b).toFixed(2)}`;
+        redraw();
+        if (isDone) {
+          fittedLine = target;
+          messageEl.textContent = `y = ${target.m.toFixed(2)}x + ${target.b.toFixed(2)}  sse: ${sse(target.m, target.b).toFixed(2)}`;
+          redraw();
+          fitBtn.disabled = false;
+          canvas.classList.remove('fitting');
+          return;
+        }
+        animId = requestAnimationFrame(step);
+      }
+      animId = requestAnimationFrame(step);
+    }
+    function clear() {
+      if (animId) { cancelAnimationFrame(animId); animId = null; }
+      fitBtn.disabled = false;
+      canvas.classList.remove('fitting');
+      points = []; fittedLine = null; messageEl.textContent = '';
+      redraw();
+    }
+    function loadSample(key) {
+      clear();
+      points = SAMPLE_DATA[key]();
+      messageEl.textContent = `${points.length} points loaded`;
+      redraw();
+    }
+    function redraw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawGrid(); drawFittedLine(); drawResiduals(); drawPoints();
+    }
+    canvas.addEventListener('click', (e) => {
+      if (animId) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
+      const px = (e.clientX - rect.left) * scaleX, py = (e.clientY - rect.top) * scaleY;
+      if (px < PADDING.left || px > canvas.width - PADDING.right || py < PADDING.top || py > canvas.height - PADDING.bottom) return;
+      points.push(pixelToData(px, py));
+      redraw();
+    });
+    document.getElementById('sampleLine').addEventListener('click', () => loadSample('linear'));
+    document.getElementById('sampleNoisy').addEventListener('click', () => loadSample('noisy'));
+    fitBtn.addEventListener('click', fit);
+    clearBtn.addEventListener('click', clear);
+    redraw();
+  </script>
+</body>
+</html>

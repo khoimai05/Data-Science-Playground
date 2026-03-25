@@ -6,127 +6,119 @@
   <title>Data Science Playground</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    :root { --accent: #3b82f6; --card-bg: #1e293b; }
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; }
+
     body {
-      font-family: 'DM Sans', system-ui, sans-serif;
+      font-family: 'Sora', sans-serif;
+      background: #0a0a0a;
+      color: #d4d4d4;
+      min-height: 100vh;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-      color: #e2e8f0;
-      position: relative;
-      overflow-x: hidden;
     }
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      z-index: -2;
-      background:
-        linear-gradient(135deg, #0f172a 0%, #1e293b 30%, #312e81 60%, #1e293b 100%);
-      background-size: 300% 300%;
-      animation: bgShift 12s ease-in-out infinite;
+
+    .page {
+      padding: 4rem 2rem;
+      max-width: 680px;
+      width: 100%;
     }
-    body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      z-index: -1;
-      background-image:
-        linear-gradient(rgba(59, 130, 246, 0.12) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(59, 130, 246, 0.12) 1px, transparent 1px);
-      background-size: 36px 36px;
-      pointer-events: none;
+
+    .title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.3rem;
     }
-    @keyframes bgShift {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
+
+    .sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: #555;
+      margin-bottom: 3rem;
+      letter-spacing: 0.02em;
     }
-    .menu { text-align: center; padding: 2rem; }
-    h1 { font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 0.5rem 0; }
-    .tagline { font-size: 0.9rem; color: #94a3b8; margin-bottom: 0.5rem; }
-    .quote {
-      font-size: 0.85rem;
-      font-style: italic;
-      color: #64748b;
-      margin-bottom: 2rem;
-      padding-left: 1rem;
-      border-left: 3px solid rgba(100, 116, 139, 0.5);
-      transition: border-color 0.25s ease, color 0.25s ease;
-    }
-    body.ready .quote { border-left-color: rgba(148, 163, 184, 0.4); }
-    .cards {
+
+    .list { display: flex; flex-direction: column; gap: 1px; }
+
+    a.item {
       display: flex;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    a.card {
-      display: block;
-      width: 240px;
-      padding: 1.5rem;
-      background: var(--card-bg);
-      border-radius: 12px;
+      align-items: baseline;
+      gap: 1rem;
+      padding: 1.1rem 0;
       text-decoration: none;
       color: inherit;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
-      transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+      border-bottom: 1px solid #1a1a1a;
+      transition: padding-left 0.2s ease;
+    }
+    a.item:first-child { border-top: 1px solid #1a1a1a; }
+
+    a.item:hover {
+      padding-left: 0.75rem;
+    }
+    a.item:hover .name { color: #fff; }
+    a.item:hover .arrow { opacity: 1; transform: translateX(0); }
+
+    .name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #b0b0b0;
+      transition: color 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .desc {
+      font-size: 0.78rem;
+      color: #4a4a4a;
+      line-height: 1.4;
+      flex: 1;
+    }
+
+    .arrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: #444;
       opacity: 0;
-      transform: translateY(12px);
+      transform: translateX(-4px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      flex-shrink: 0;
     }
-    body.ready .cards .card {
-      animation: cardEnter 0.3s ease-out forwards;
+
+    a.item:focus-visible {
+      outline: 1px solid #333;
+      outline-offset: 4px;
     }
-    body.ready .cards .card:nth-child(1) { animation-delay: 0.05s; }
-    body.ready .cards .card:nth-child(2) { animation-delay: 0.1s; }
-    body.ready .cards .card:nth-child(3) { animation-delay: 0.15s; }
-    @keyframes cardEnter {
-      to { opacity: 1; transform: translateY(0); }
-    }
-    a.card:hover {
-      transform: translateY(-3px) scale(1.02);
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
-    }
-    a.card:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
-    .card h2 { font-size: 1.1rem; margin: 0 0 0.5rem 0; color: #e2e8f0; }
-    .card p { font-size: 0.8rem; color: #94a3b8; margin: 0; line-height: 1.5; }
-    @media (prefers-reduced-motion: reduce) {
-      body::before { animation: none; }
-      a.card { opacity: 1; transform: none; animation: none; }
-      body.ready .cards .card { animation: none; opacity: 1; }
-      a.card:hover { transform: translateY(-2px); }
+
+    @media (max-width: 500px) {
+      .page { padding: 3rem 1.5rem; }
+      a.item { flex-wrap: wrap; gap: 0.25rem; }
+      .desc { width: 100%; padding-left: 0; }
     }
   </style>
 </head>
 <body>
-  <div class="menu">
-    <h1>Khoi's Data Science Playground</h1>
-    <p class="tagline">Interactive ML demos with visualization | More coming soon :)</p>
-    <p class="quote">"All models are wrong, but some are useful." — George Box</p>
-    <div class="cards">
-      <a href="linear-regression.html" class="card">
-        <h2>Linear Regression</h2>
-        <p>Fit a line to 2D points. Watch gradient descent minimize MSE and see residual errors.</p>
+  <div class="page">
+    <h1 class="title">data science playground</h1>
+    <p class="sub">interactive ml demos by khoi</p>
+    <div class="list">
+      <a href="linear-regression/" class="item">
+        <span class="name">Linear Regression</span>
+        <span class="desc">gradient descent on MSE, animated</span>
+        <span class="arrow">→</span>
       </a>
-      <a href="logistic-regression.html" class="card">
-        <h2>Logistic Regression</h2>
-        <p>Classify two classes. Fit a decision boundary with gradient descent on cross-entropy loss.</p>
+      <a href="logistic-regression/" class="item">
+        <span class="name">Logistic Regression</span>
+        <span class="desc">binary classification with decision boundary</span>
+        <span class="arrow">→</span>
       </a>
-      <a href="knn.html" class="card">
-        <h2>K-Nearest Neighbors</h2>
-        <p>No training—instant predictions. Adjust K and see decision regions update in real time.</p>
+      <a href="knn/" class="item">
+        <span class="name">K-Nearest Neighbors</span>
+        <span class="desc">real-time decision regions, no training step</span>
+        <span class="arrow">→</span>
       </a>
     </div>
   </div>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      requestAnimationFrame(() => document.body.classList.add('ready'));
-    });
-  </script>
 </body>
 </html>
