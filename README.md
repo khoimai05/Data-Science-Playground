@@ -13,7 +13,7 @@ Fit `y = mx + b` by minimizing mean squared error. Watch gradient descent nudge 
 
 
 ### Logistic Regression
-Binary classification via sigmoid + cross-entropy loss. Drop blue (class 0) and red (class 1) points, hit fit, and watch the decision boundary converge with gradient descent — no closed form, pure iteration.
+Binary classification via sigmoid + cross-entropy loss. Drop blue (class 0) and red (class 1) points, hit fit, and watch the decision boundary converge with gradient descent - no closed form, pure iteration.
 
 ### K-Nearest Neighbors
 No training step. The decision regions repaint in real time as you add points or adjust K. Switch between Euclidean and Manhattan distance to see how the metric shapes the boundaries.
@@ -22,7 +22,7 @@ No training step. The decision regions repaint in real time as you add points or
 Unsupervised centroid convergence, animated step by step. Uses **k-means++** initialization to avoid bad starts. Tracks within-cluster sum of squares (WCSS) so you can watch it drop. Try the ring dataset to see where k-means struggles.
 
 ### Principal Component Analysis
-Drop a cloud of points and see the eigenvectors — the axes of maximum variance — drawn live. Intuition for what PCA is actually doing before the matrix algebra.
+Drop a cloud of points and see the eigenvectors - the axes of maximum variance - drawn live. Intuition for what PCA is actually doing before the matrix algebra.
 
 ---
 
@@ -67,9 +67,9 @@ data-science-playground/
 
 ## Design
 
-- **Dark, minimal UI** — Sora + JetBrains Mono, `#0a0a0a` background
-- **Canvas-based rendering** — all visuals drawn with the 2D Canvas API, no SVG or charting libraries
-- **Pixel-space region fills** — decision boundaries and Voronoi regions computed by classifying a low-res pixel grid and scaling it up
+- **Dark, minimal UI** - Sora + JetBrains Mono, `#0a0a0a` background
+- **Canvas-based rendering** - all visuals drawn with the 2D Canvas API, no SVG or charting libraries
+- **Pixel-space region fills** - decision boundaries and Voronoi regions computed by classifying a low-res pixel grid and scaling it up
 ---
 
 ## Concepts Covered
@@ -84,4 +84,4 @@ data-science-playground/
 
 ---
 
-*Built by Khoi — interactive ML demos for learning and intuition.*
+*Built by Khoi - interactive ML demos for learning and intuition.*
