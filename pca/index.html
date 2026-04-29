@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Principal Component Analysis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Sora:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      font-family: 'Sora', sans-serif; background: #0a0a0a; color: #d4d4d4;
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 2rem;
+    }
+    .header { text-align: center; margin-bottom: 1.5rem; }
+    .header a { font-family: 'JetBrains Mono', monospace; color: #444; font-size: 0.75rem; text-decoration: none; transition: color 0.2s; }
+    .header a:hover { color: #888; }
+    h1 { font-size: 1.1rem; font-weight: 600; color: #fff; margin: 0.5rem 0 0.15rem; }
+    .subtitle { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #444; }
+    .main { display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; justify-content: center; margin-bottom: 1.25rem; }
+    .canvas-wrap { border: 1px solid #1a1a1a; border-radius: 6px; padding: 1rem; transition: border-color 0.3s; }
+    .canvas-wrap:hover { border-color: #2a2a2a; }
+    .info { max-width: 300px; border-left: 1px solid #1a1a1a; padding-left: 1.5rem; }
+    .info h2 { font-size: 0.8rem; font-weight: 600; color: #888; margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .info p { font-size: 0.78rem; line-height: 1.65; color: #555; margin-bottom: 0.6rem; }
+    .info p:last-child { margin-bottom: 0; }
+    .info code { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #888; background: #141414; padding: 0.1rem 0.35rem; border-radius: 3px; }
+    .stats { margin-top: 1.2rem; padding-top: 1.2rem; border-top: 1px solid #1a1a1a; }
+    .stat-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.3rem; }
+    .stat-label { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #555; }
+    .stat-val { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; }
+    .bar-bg { height: 3px; background: #1a1a1a; border-radius: 2px; margin-bottom: 0.75rem; }
+    .bar-fg { height: 100%; border-radius: 2px; transition: width 0.35s ease; }
+    canvas { display: block; cursor: crosshair; border-radius: 4px; background: #0e0e0e; }
+    .controls { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; justify-content: center; }
+    .toggle { display: flex; border: 1px solid #222; border-radius: 4px; overflow: hidden; }
+    .toggle button { font-family: 'JetBrains Mono', monospace; padding: 0.4rem 0.8rem; font-size: 0.72rem; border: none; cursor: pointer; background: transparent; color: #444; transition: color 0.15s, background 0.15s; }
+    .toggle button.active { color: #d4d4d4; background: #161616; }
+    button { font-family: 'JetBrains Mono', monospace; padding: 0.45rem 1rem; font-size: 0.75rem; font-weight: 500; border: 1px solid #222; border-radius: 4px; background: transparent; color: #666; cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+    button:hover { color: #bbb; border-color: #444; }
+    button:active { transform: scale(0.97); }
+    .msg { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #555; }
+    .msg:empty { display: none; }
+    @media (max-width: 700px) { .info { border-left: none; padding-left: 0; border-top: 1px solid #1a1a1a; padding-top: 1rem; max-width: 100%; } }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a href="../">← back</a>
+    <h1>principal component analysis</h1>
+    <p class="subtitle">click to drop points — toggle to project into PC space</p>
+  </header>
+  <div class="main">
+    <div class="canvas-wrap">
+      <canvas id="plot" width="520" height="420"></canvas>
+    </div>
+    <article class="info">
+      <h2>How it works</h2>
+      <p>Center the data by subtracting the mean. Compute the <code>covariance matrix</code>. Find its eigenvectors — those are the principal components.</p>
+      <p><code>PC1</code> points in the direction of maximum variance. <code>PC2</code> is orthogonal and captures the rest. Arrow length scales with standard deviation.</p>
+      <p>Toggle to <em>pca space</em> to see the data projected onto these axes — each point's (PC1, PC2) score.</p>
+      <div class="stats">
+        <div class="stat-row">
+          <span class="stat-label">PC1 variance</span>
+          <span class="stat-val" id="ev1" style="color:#60a5fa">—</span>
+        </div>
+        <div class="bar-bg"><div class="bar-fg" id="bar1" style="width:0%;background:#60a5fa"></div></div>
+        <div class="stat-row">
+          <span class="stat-label">PC2 variance</span>
+          <span class="stat-val" id="ev2" style="color:#f87171">—</span>
+        </div>
+        <div class="bar-bg"><div class="bar-fg" id="bar2" style="width:0%;background:#f87171"></div></div>
+      </div>
+    </article>
+  </div>
+  <div class="controls">
+    <button id="sampleDiag">diagonal</button>
+    <button id="sampleWide">wide</button>
+    <button id="sampleIso">isotropic</button>
+    <button id="sampleBlobs">blobs</button>
+    <div class="toggle">
+      <button id="viewOriginal" class="active">original</button>
+      <button id="viewPCA">pca space</button>
+    </div>
+    <button id="clearBtn">clear</button>
+    <span class="msg" id="message"></span>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
