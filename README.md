@@ -2,7 +2,7 @@
 
 Interactive, browser-based visualizations of core machine learning algorithms — built with vanilla HTML, CSS, and Canvas. No frameworks, no dependencies, no build step.
 
-**[Live demos](./index.html)** · click to drop points, tweak parameters, and watch the math happen in real time.
+**[Live demos](https://khoimai05.github.io/Data-Science-Playground/)** · click to drop points, tweak parameters, and watch the math happen in real time.
 
 ---
 
