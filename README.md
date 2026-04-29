@@ -1,6 +1,6 @@
 # Data Science Playground
 
-Interactive, browser-based visualizations of core machine learning algorithms — built with vanilla HTML, CSS, and Canvas. No frameworks, no dependencies, no build step.
+Interactive, browser-based visualizations of core machine learning algorithms
 
 **[Live demos](https://khoimai05.github.io/Data-Science-Playground/)** · click to drop points, tweak parameters, and watch the math happen in real time.
 
@@ -70,8 +70,6 @@ data-science-playground/
 - **Dark, minimal UI** — Sora + JetBrains Mono, `#0a0a0a` background
 - **Canvas-based rendering** — all visuals drawn with the 2D Canvas API, no SVG or charting libraries
 - **Pixel-space region fills** — decision boundaries and Voronoi regions computed by classifying a low-res pixel grid and scaling it up
-- **Animated gradient descent** — fit loops run via `requestAnimationFrame` / `setTimeout` so you see each step
-
 ---
 
 ## Concepts Covered
