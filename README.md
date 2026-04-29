@@ -11,8 +11,6 @@ Interactive, browser-based visualizations of core machine learning algorithms �
 ### Linear Regression
 Fit `y = mx + b` by minimizing mean squared error. Watch gradient descent nudge the line downhill step by step, with residuals drawn live so you can see what's being minimized.
 
-### Polynomial Regression
-Drag a degree slider from 1 to (way too high) and see the model go from underfit straight line → good fit → wildly overfit curve. A clean visual intuition for the bias-variance tradeoff.
 
 ### Logistic Regression
 Binary classification via sigmoid + cross-entropy loss. Drop blue (class 0) and red (class 1) points, hit fit, and watch the decision boundary converge with gradient descent — no closed form, pure iteration.
@@ -34,7 +32,7 @@ No install required. Just open `index.html` in a browser:
 
 ```bash
 # clone and open
-git clone https://github.com/your-username/data-science-playground.git
+git clone https://github.com/khoimai05/data-science-playground.git
 cd data-science-playground
 open index.html   # macOS
 # or just drag index.html into your browser
@@ -51,9 +49,6 @@ data-science-playground/
 ├── index.html                  # landing page / demo list
 ├── linear-regression/
 │   └── index.html              # self-contained (script inline)
-├── polynomial-regression/
-│   ├── index.html
-│   └── app.js
 ├── logistic-regression/
 │   ├── index.html
 │   └── app.js
@@ -84,7 +79,6 @@ data-science-playground/
 | Demo | Key ideas |
 |---|---|
 | Linear Regression | MSE loss, gradient descent, residuals |
-| Polynomial Regression | Bias-variance tradeoff, overfitting |
 | Logistic Regression | Sigmoid, cross-entropy, decision boundary |
 | KNN | Non-parametric classification, distance metrics, decision regions |
 | K-Means | Unsupervised clustering, k-means++, WCSS, convergence |
