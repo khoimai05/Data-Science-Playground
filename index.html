@@ -1,14 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Data Science Playground</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Sora:wght@400;600;700&display=swap"
+    rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+    }
 
     body {
       font-family: 'Sora', sans-serif;
@@ -41,7 +47,11 @@
       letter-spacing: 0.02em;
     }
 
-    .list { display: flex; flex-direction: column; gap: 1px; }
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
 
     a.item {
       display: flex;
@@ -53,13 +63,23 @@
       border-bottom: 1px solid #1a1a1a;
       transition: padding-left 0.2s ease;
     }
-    a.item:first-child { border-top: 1px solid #1a1a1a; }
+
+    a.item:first-child {
+      border-top: 1px solid #1a1a1a;
+    }
 
     a.item:hover {
       padding-left: 0.75rem;
     }
-    a.item:hover .name { color: #fff; }
-    a.item:hover .arrow { opacity: 1; transform: translateX(0); }
+
+    a.item:hover .name {
+      color: #fff;
+    }
+
+    a.item:hover .arrow {
+      opacity: 1;
+      transform: translateX(0);
+    }
 
     .name {
       font-size: 0.95rem;
@@ -92,12 +112,23 @@
     }
 
     @media (max-width: 500px) {
-      .page { padding: 3rem 1.5rem; }
-      a.item { flex-wrap: wrap; gap: 0.25rem; }
-      .desc { width: 100%; padding-left: 0; }
+      .page {
+        padding: 3rem 1.5rem;
+      }
+
+      a.item {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+      }
+
+      .desc {
+        width: 100%;
+        padding-left: 0;
+      }
     }
   </style>
 </head>
+
 <body>
   <div class="page">
     <h1 class="title">data science playground</h1>
@@ -133,12 +164,8 @@
         <span class="desc">maximum-margin boundary with hinge loss</span>
         <span class="arrow">→</span>
       </a>
-      <a href="pca/" class="item">
-        <span class="name">Principal Component Analysis</span>
-        <span class="desc">eigenvectors — find axes of max variance</span>
-        <span class="arrow">→</span>
-      </a>
     </div>
   </div>
 </body>
+
 </html>
