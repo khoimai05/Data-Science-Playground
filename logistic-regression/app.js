@@ -142,32 +142,61 @@ function crossEntropy(w1,w2,b) {
   points.forEach(({x,y,label})=>{let p=sigmoid(w1*x+w2*y+b);p=Math.max(eps,Math.min(1-eps,p));loss-=label*Math.log(p)+(1-label)*Math.log(1-p);});
   return loss/points.length;
 }
-function gradientStep(w1,w2,b,lr) {
-  const n=points.length;let dw1=0,dw2=0,db=0;
-  points.forEach(({x,y,label})=>{const p=sigmoid(w1*x+w2*y+b);const err=p-label;dw1+=err*x;dw2+=err*y;db+=err;});
-  dw1/=n;dw2/=n;db/=n;
-  const mag=Math.sqrt(dw1*dw1+dw2*dw2+db*db)+1e-8,scale=Math.min(1,1/mag);
-  return{w1:w1-lr*dw1*scale,w2:w2-lr*dw2*scale,b:b-lr*db*scale};
-}
-
 function fit() {
   const n0=points.filter(p=>p.label===0).length,n1=points.filter(p=>p.label===1).length;
   if(points.length<2||n0===0||n1===0){messageEl.textContent='need points from both classes';boundary=null;redraw();return;}
   fitBtn.disabled=true;canvas.classList.add('fitting');
-  let w1=0,w2=0,b=0,lr=0.1/Math.sqrt(points.length),iter=0,prevLoss=Infinity;
-  function step(){
-    let done=false;
-    for(let i=0;i<8;i++){({w1,w2,b}=gradientStep(w1,w2,b,lr));iter++;const loss=crossEntropy(w1,w2,b);if(prevLoss-loss<1e-6||iter>=2000||!Number.isFinite(loss)){done=true;break;}prevLoss=loss;}
+  let w1=0,w2=0,b=0,iter=0;
+
+  function tick(){
+    const n=points.length;
+    let g1=0,g2=0,g3=0,h11=0,h12=0,h13=0,h22=0,h23=0,h33=0;
+    points.forEach(({x,y,label})=>{
+      const p=sigmoid(w1*x+w2*y+b),err=p-label,pq=p*(1-p);
+      g1+=err*x;g2+=err*y;g3+=err;
+      h11+=pq*x*x;h12+=pq*x*y;h13+=pq*x;h22+=pq*y*y;h23+=pq*y;h33+=pq;
+    });
+    g1/=n;g2/=n;g3/=n;h11/=n;h12/=n;h13/=n;h22/=n;h23/=n;h33/=n;
+
+    const det=h11*(h22*h33-h23*h23)-h12*(h12*h33-h23*h13)+h13*(h12*h23-h22*h13);
+    let converged=false;
+    if(Math.abs(det)<1e-12){
+      converged=true;
+    } else {
+      const i00=(h22*h33-h23*h23)/det,i01=(h23*h13-h12*h33)/det,i02=(h12*h23-h22*h13)/det;
+      const i11=(h11*h33-h13*h13)/det,i12=(h12*h13-h11*h23)/det,i22=(h11*h22-h12*h12)/det;
+      const dw1=i00*g1+i01*g2+i02*g3,dw2=i01*g1+i11*g2+i12*g3,db=i02*g1+i12*g2+i22*g3;
+      if(Math.sqrt(dw1*dw1+dw2*dw2+db*db)<1e-7){
+        converged=true;
+      } else {
+        let alpha=1.0,loss0=crossEntropy(w1,w2,b),updated=false;
+        for(let k=0;k<20;k++){
+          const nw1=w1-alpha*dw1,nw2=w2-alpha*dw2,nb=b-alpha*db;
+          const nl=crossEntropy(nw1,nw2,nb);
+          if(Number.isFinite(nl)&&nl<loss0-1e-12){w1=nw1;w2=nw2;b=nb;updated=true;break;}
+          alpha*=0.5;
+        }
+        if(!updated) converged=true;
+      }
+    }
+
+    iter++;
     boundary={w1,w2,b};
-    messageEl.textContent=`step ${iter}  loss: ${crossEntropy(w1,w2,b).toFixed(4)}`;
+    const loss=crossEntropy(w1,w2,b);
     redraw();
-    if(done){const loss=crossEntropy(w1,w2,b);messageEl.textContent=`${w1.toFixed(2)}x + ${w2.toFixed(2)}y + ${b.toFixed(2)} = 0  loss: ${loss.toFixed(4)}`;redraw();fitBtn.disabled=false;canvas.classList.remove('fitting');return;}
-    animId=requestAnimationFrame(step);
+
+    if(converged||iter>=50){
+      messageEl.textContent=`${w1.toFixed(2)}x + ${w2.toFixed(2)}y + ${b.toFixed(2)} = 0  loss: ${loss.toFixed(4)}`;
+      fitBtn.disabled=false;canvas.classList.remove('fitting');
+      return;
+    }
+    messageEl.textContent=`step ${iter}  loss: ${loss.toFixed(4)}`;
+    animId=setTimeout(tick,150);
   }
-  animId=requestAnimationFrame(step);
+  tick();
 }
 
-function clear(){if(animId){cancelAnimationFrame(animId);animId=null;}fitBtn.disabled=false;canvas.classList.remove('fitting');points=[];boundary=null;messageEl.textContent='';redraw();}
+function clear(){if(animId){clearTimeout(animId);animId=null;}fitBtn.disabled=false;canvas.classList.remove('fitting');points=[];boundary=null;messageEl.textContent='';redraw();}
 function loadSample(key){clear();points=SAMPLE_DATA[key]();messageEl.textContent=`${points.length} points loaded`;redraw();}
 function redraw(){ctx.clearRect(0,0,canvas.width,canvas.height);drawGrid();drawRegionOverlay();drawBoundary();drawResidualLines();drawPoints();}
 
